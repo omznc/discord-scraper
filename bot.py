@@ -6,13 +6,14 @@ import time
 import json
 import os
 
-parseHubKey = "" 
-parseHubLink_run = ''
-parseHubLink_fetch = ''
-dataLocation = ''
-botToken = ''
-thumbnailURL = ""
-sendChannelID = 
+# A really bad 'settings' page.
+parseHubKey = ""  # Parsehub API key
+parseHubLink_run = '' # Parsehub run project link
+parseHubLink_fetch = '' # Parsehub get latest data link
+dataLocation = '' # The json file that stores the last title
+botToken = '' # Discord bot token
+thumbnailURL = "" # Photo in the embed
+sendChannelID = 1337 # Set the channel ID here
 
 
 class MyClient(discord.Client):
@@ -33,7 +34,7 @@ class MyClient(discord.Client):
             f = open(dataLocation)
             OldTitle = json.load(f)
 
-            # Bullshit
+            # Parsehub stuff
             requests.post(parseHubLink_run, params=params)
             await asyncio.sleep(30)
             r = requests.get(parseHubLink_fetch, params=params)
@@ -45,11 +46,17 @@ class MyClient(discord.Client):
                 f = open(dataLocation, "w")
                 json.dump(OldTitle, f)
                 f.close()
+                # If there's no content to the post (image-only): 
                 if "content" not in data.keys():
                     noPostDescription = "Obavijest nema teksta. Kliknite na naslov da otvorite u browser-u."
                     embed=discord.Embed(title=data["title"], url=data["article_url"], description=noPostDescription, color=0xf6f6f6)
+                # If the post contains more text than an embed can support:
                 elif len(data["content"])>2000:
-                    description = f"{data['short_description']} \n\nPoruka preduga. Otvorite u browseru."
+                    # If there's a short description:
+                    if "short_description" in data.keys():
+                        description = f"{data['short_description']} \n\nPoruka preduga. Otvorite u browseru."
+                    else:
+                        description = "\n\nPoruka preduga. Otvorite u browseru."
                     embed=discord.Embed(title=data["title"], url=data["article_url"], description=description, color=0xf6f6f6)
                 else:
                     embed=discord.Embed(title=data["title"], url=data["article_url"], description=data["content"], color=0xf6f6f6)
